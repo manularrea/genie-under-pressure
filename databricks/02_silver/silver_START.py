@@ -18,7 +18,7 @@ prefix = f"`{catalog}`.`{schema}`"
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## Migración — START: propuesta para revisar
+# MAGIC ## Migración — SOLUTION: contrato preservado
 # MAGIC Ejecuta bootstrap antes. El resultado es un snapshot diario, no un feed incremental.
 # MAGIC No cambies la salida esperada. Después ejecuta `reconcile.py`.
 
@@ -73,7 +73,7 @@ def queries(prefix, report_day="2026-09-30", flawed=False):
       AND t.event_time {boundary} CAST('{report_day}' AS TIMESTAMP_NTZ) + INTERVAL 1 DAY""")
     return statements
 
-for statement in queries(prefix, flawed=True):
+for statement in queries(prefix, flawed=False):
     spark.sql(statement)
 spark.table("quarantine_out").write.format("delta").mode("overwrite").saveAsTable(f"{prefix}.quarantine")
 spark.table("silver_out").write.format("delta").mode("overwrite").saveAsTable(f"{prefix}.silver")
