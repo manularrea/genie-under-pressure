@@ -1,0 +1,2 @@
+# Optional. The local workshop route requires only the Python standard library.
+pyspark>=3.5,<4.0

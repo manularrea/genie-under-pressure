@@ -1,0 +1,2 @@
+transaction_id,account_id,merchant_id,event_ts,amount,currency,status,updated_at,source_row,source_system
+DRIFT001,A0000,,2026-09-30T12:00:00,"1,245.50",USD,CANCELLED,2026-09-30T23:59:59,0,LEGACY_US

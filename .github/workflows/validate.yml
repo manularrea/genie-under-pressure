@@ -1,0 +1,23 @@
+name: Validate business contract
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  reconciliation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - name: Validate the reference solution
+        run: python -m scripts.run_lab --candidate solutions/lab02/silver.sql
+      - name: Gate the actual PR candidate
+        if: github.event_name == 'pull_request'
+        run: python -m scripts.run_lab --candidate labs/lab02/silver.sql
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reconciliation
+          path: artifacts/reconciliation.json

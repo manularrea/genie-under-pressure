@@ -1,0 +1,14 @@
+# Databricks notebook source
+# MAGIC %md
+# MAGIC # Lab 1: autopsia de T-SQL
+# MAGIC El procedimiento siguiente es contexto de lectura para Genie Code.
+# MAGIC No se ejecuta T-SQL en Spark. Pega el contrato en el chat y pide reglas/supuestos.
+
+# COMMAND ----------
+legacy_tsql = '-- Deliberately awkward but contract-preserving legacy procedure.\n-- Do not add NOLOCK: this teaching fixture is a static snapshot.\nCREATE OR ALTER PROCEDURE dbo.sp_daily_customer_metrics @ReportDate date\nAS\nBEGIN\n SET NOCOUNT ON;\n DECLARE @D1 datetime2 = CONVERT(datetime2, @ReportDate);\n DECLARE @D2 datetime2 = DATEADD(day, 1, @D1);\n DECLARE @UnusedMode int = 0;\n -- Old comment: "only settled". Wrong! Both POSTED and CANCELLED remain in history.\n SELECT * INTO #TMP_01 FROM (\n  SELECT t.*, ROW_NUMBER() OVER (PARTITION BY transaction_id ORDER BY updated_at DESC, source_row DESC) R1\n  FROM dbo.transactions t\n ) x WHERE R1 = 1;\n SELECT * INTO #TMP_02 FROM (\n  SELECT c.*, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY updated_at DESC, source_row DESC) R2\n  FROM dbo.customers c\n ) x WHERE R2 = 1;\n SELECT * INTO #TMP_03 FROM (\n  SELECT m.*, ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_at DESC, source_row DESC) R3\n  FROM dbo.merchants m\n ) x WHERE R3 = 1;\n -- Invalid input is quarantined by the ingestion contract (see BUSINESS_CONTRACT.md).\n -- This SELECT yields the valid daily snapshot. Currency totals belong in a later stage.\n SELECT t.transaction_id, t.account_id, a.customer_id,\n  NULLIF(t.merchant_id, \'\') merchant_id, m.merchant_name, c.segment,\n  CONVERT(varchar(19), TRY_CONVERT(datetime2, t.event_ts, 126), 126) event_ts,\n  CONVERT(bigint, TRY_CONVERT(decimal(18,2), t.amount) * 100) amount_minor,\n  t.currency, t.status\n INTO #TMP_04\n FROM #TMP_01 t\n INNER JOIN dbo.accounts a ON a.account_id = t.account_id\n INNER JOIN #TMP_02 c ON c.customer_id = a.customer_id\n LEFT JOIN #TMP_03 m ON m.merchant_id = t.merchant_id\n WHERE LEN(t.event_ts) = 19\n  AND TRY_CONVERT(datetime2, t.event_ts, 126) >= @D1\n  AND TRY_CONVERT(datetime2, t.event_ts, 126) < @D2\n  AND TRY_CONVERT(decimal(18,2), t.amount) IS NOT NULL\n  AND t.currency IN (\'COP\', \'USD\')\n  AND t.status IN (\'POSTED\', \'CANCELLED\');\n -- Legacy shortcut is valid only because exported baseline amount strings have two decimals.\n -- For new formats, use the stricter contract before this stage.\n SELECT transaction_id, account_id, customer_id, merchant_id, merchant_name,\n        segment, event_ts, amount_minor, currency, status\n FROM #TMP_04 ORDER BY transaction_id;\nEND;\nGO\n'
+print(legacy_tsql)
+
+# COMMAND ----------
+# MAGIC %md
+# MAGIC Entrega: etapas, reglas confirmadas, comentarios obsoletos, riesgos y refactor mínimo.
+# MAGIC La ejecución en SQL Server es opcional y tiene su comparador en legacy/README.md.

@@ -1,0 +1,24 @@
+{
+  "provenance": "Independent Python business-contract oracle, not a SQL Server run",
+  "report_day": "2026-09-30",
+  "raw_rows": 20014,
+  "quarantine_rows": 3,
+  "rows": 1007,
+  "distinct_keys": 1007,
+  "distinct_customers": 5,
+  "cancelled_rows": 145,
+  "null_merchant_rows": 34,
+  "amount_minor_by_currency": {
+    "COP": 73378316,
+    "USD": 36550155
+  },
+  "posted_minor_by_currency": {
+    "COP": 62918780,
+    "USD": 30953471
+  },
+  "partition_sha256": {
+    "COP": "f82c86487fed15a967a8628211ccd46d72ba06e0053f3e2ea6fddcf166568a38",
+    "USD": "20c0586da78aa6d86252b314fa28bbbcfc80eb08e7def41caaa1c4b8dd827d57"
+  },
+  "row_sha256": "6f92f767de0c9f59351a66557f2c8ba002dd61200762231a6337364fcc4383a8"
+}
